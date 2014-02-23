@@ -6,11 +6,13 @@
 
 namespace greg = boost::gregorian;
 
+
 class day_iterator
 	: public boost::iterator_facade <
 	day_iterator
 	, greg::date
 	, boost::forward_traversal_tag
+	, const greg::date&
 	>
 {
 public:
@@ -35,10 +37,15 @@ private:
 		return this->m_date == other.m_date;
 	}
 
-	greg::date& dereference() const
+	const greg::date& dereference() const
 	{
 		//return greg::date(this->m_date);
-		return const_cast<day_iterator*>(this)->m_date;
+		return m_date;
+	}
+	greg::date& dereference()
+	{
+		//return greg::date(this->m_date);
+		return m_date;
 	}
 
 	greg::date m_date;
@@ -56,4 +63,5 @@ struct day_range : public ranges::iterator_range<day_iterator>
 		ranges::iterator_range<day_iterator>(begin, end)
 	{}
 };
+
 

@@ -6,36 +6,98 @@
 
 #include "day.hpp"
 
-template <typename BinaryPred>
-struct chunkBy
-  : ranges::range_facade<chunkBy<BinaryPred>>
+template <typename InputRange, typename BinaryPred>
+struct chunkBy_view
+  : ranges::range_facade<chunkBy_view<InputRange, BinaryPred>>
 {
 
-rivate:
+private:
 
-    friend ranges::range_facade<chunkBy>;
-    day_iterator c_;
-    day_iterator e_;
+    friend ranges::range_facade<chunkBy_view>;
+    InputRange rng_;
+    BinaryPred pred_;
+
     decltype(auto) dereference() const
     {
-       return ranges::range(c_, e_) | ranges::view::adjacent_filter(BinaryPred());
+       return rng_ | ranges::view::adjacent_filter(pred_);
+    }
+        decltype(auto) dereference()
+    {
+       return rng_ | ranges::view::adjacent_filter(pred_);
     }
     void increment()
     {
-        c_ = std::adjacent_find(c_, e_, std::not2(BinaryPred()));
-        if(c_ != e_)
-          ++c_;
+       auto it = rng_.begin();
+       auto e = rng_.end();
+       it = std::adjacent_find(it, e, std::not2(pred_));
+       if(it != e)
+         ++it;
+       rng_ = InputRange(it, e);
     }
     bool done() const
     {
-      return *c_ == *e_;
+      return rng_.begin() == rng_.end();
     }
-    bool equal(chunkBy const &that) const
+    bool equal(chunkBy_view const &that) const
     {
-       return *c_ == *that.c_;
+       return rng_.begin() == that.rng_.begin();
     }
 public:
-    chunkBy(day_iterator b, day_iterator e)
-        : c_(b), e_(e) {}
+    chunkBy_view(InputRange rng, BinaryPred pred)
+        : rng_(rng), pred_(pred){}
 };
+
+template <typename InputRange, typename BinaryPred>
+chunkBy_view<InputRange, BinaryPred> ChunkBy(InputRange ir, BinaryPred pred)
+{
+   return chunkBy_view<InputRange, BinaryPred>(ir, pred);
+}
+
+
+/*
+namespace view
+{
+    struct chunkByer : ranges::bindable<chunkByer>
+    {
+    private:
+        template<typename BinaryPred>
+        struct chunkByer1 : ranges::pipeable<chunkByer1<BinaryPred>>
+        {
+        private:
+            BinaryPred pred_;
+        public:
+            chunkByer1(BinaryPred pred)
+              : pred_(std::move(pred))
+            {}
+            template<typename InputRange, typename This>
+            static chunkBy_view<InputRange, BinaryPred>
+            pipe(InputRange && rng, This && this_)
+            {
+                return {std::forward<InputRange>(rng), std::forward<This>(this_).pred_};
+            }
+        };
+    public:
+        ///
+        template<typename InputRange1, typename BinaryPred>
+        static chunkBy_view<InputRange1, BinaryPred>
+        invoke(chunkByer, InputRange1 && rng, BinaryPred pred)
+        {
+            //CONCEPT_ASSERT(ranges::InputRange<InputRange1>());
+            //CONCEPT_ASSERT(ranges::Callable<invokable_t<UnaryFunction>,
+            //                                range_reference_t<InputRange1>>());
+            return {std::forward<InputRange1>(rng), std::move(pred)};
+        }
+
+        /// \overload
+        template<typename BinaryPred>
+        static chunkByer1<BinaryPred> invoke(chunkByer, BinaryPred pred)
+        {
+            return {std::move(pred)};
+        }
+    };
+
+    RANGES_CONSTEXPR chunkByer chunkBy {};
+
+}
+*/
 

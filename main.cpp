@@ -56,21 +56,24 @@ int main()
 	{
         auto rd = datesInYear(2014);
 
-	    auto months = ChunkByMonth(rd.begin(), rd.end());
-	    months | ranges::for_each([](const auto& m)
+        std::cout << "chunck by month" << std::endl;
+	    auto months = ChunkByMonth(rd);
+        months| ranges::for_each([](const auto& aMonth)
 	    {
-	       for(day_iterator d : m)
+	       for(day_iterator d : aMonth)
 	          std::cout << *d << "\n";
             std::cout << "\n";
 	    });
 
-	    //auto months = datesInYear(2013);
-		//auto months = datesInYear(2013)
-		//	| bymonth
-		//	| transformed(formatMonth());
 
-
-		//boost::copy(months, std::ostream_iterator<std::string>(std::cout, "\n"));
+	    std::cout << "chunck by week" << std::endl;
+	    auto weeks = ChunkByWeek(rd);
+        weeks | ranges::for_each([](const auto& aWeek)
+	    {
+	       for(day_iterator d : aWeek)
+	          std::cout << *d << "\n";
+            std::cout << "\n";
+	    });
 	}
 
 	catch (std::exception& e) {
