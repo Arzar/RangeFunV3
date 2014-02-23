@@ -44,12 +44,7 @@ private:
 	greg::date m_date;
 };
 
-
-//#include <boost/range/adaptor/argument_fwd.hpp>
 #include <range/v3/iterator_range.hpp>
-
-
-
 
 struct day_range : public ranges::iterator_range<day_iterator>
 {
