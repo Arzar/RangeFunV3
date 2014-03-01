@@ -6,6 +6,8 @@
 
 #include "day.hpp"
 
+
+
 template <typename InputRange, typename BinaryPred>
 struct chunkBy_view
   : ranges::range_facade<chunkBy_view<InputRange, BinaryPred>>
@@ -13,23 +15,20 @@ struct chunkBy_view
 
 private:
 
-    friend ranges::range_facade<chunkBy_view>;
+    friend ranges::range_core_access;
     InputRange rng_;
     BinaryPred pred_;
 
-    decltype(auto) dereference() const
+    auto current() const
     {
-       return rng_ | ranges::view::adjacent_filter(pred_);
+       return ranges::v3::range(rng_.begin(), ranges::adjacent_find(rng_, pred_));
     }
-        decltype(auto) dereference()
-    {
-       return rng_ | ranges::view::adjacent_filter(pred_);
-    }
-    void increment()
+
+    void next()
     {
        auto it = rng_.begin();
        auto e = rng_.end();
-       it = std::adjacent_find(it, e, std::not2(pred_));
+       it = std::adjacent_find(it, e, pred_);
        if(it != e)
          ++it;
        rng_ = InputRange(it, e);
@@ -48,13 +47,13 @@ public:
 };
 
 template <typename InputRange, typename BinaryPred>
-chunkBy_view<InputRange, BinaryPred> ChunkBy(InputRange ir, BinaryPred pred)
+chunkBy_view<InputRange, BinaryPred> ChunkByFunc(InputRange ir, BinaryPred pred)
 {
    return chunkBy_view<InputRange, BinaryPred>(ir, pred);
 }
 
 
-/*
+
 namespace view
 {
     struct chunkByer : ranges::bindable<chunkByer>
@@ -99,5 +98,3 @@ namespace view
     RANGES_CONSTEXPR chunkByer chunkBy {};
 
 }
-*/
-

@@ -1,6 +1,8 @@
 # depslib dependency file v1.0
-1393197509 source:/home/arzar/Code/RangeFunV3/main.cpp
+1393632179 source:/home/arzar/Code/RangeFunV3/main.cpp
 	<range/v3/algorithm/for_each.hpp>
+	<range/v3/view/transform.hpp>
+	<range/v3/algorithm/transform.hpp>
 	"range_ext.hpp"
 
 1387232131 /home/arzar/Code/range-v3/include/range/v3/utility/iterator_traits.hpp
@@ -177,11 +179,11 @@
 1389534465 /home/arzar/Code/range-v3/include/range/v3/utility/functional.hpp
 	<range/v3/range_fwd.hpp>
 
-1393196592 /home/arzar/Code/RangeFunV3/range_ext.hpp
+1393631028 /home/arzar/Code/RangeFunV3/range_ext.hpp
 	"chunkby.hpp"
 	"day.hpp"
 
-1393196891 /home/arzar/Code/RangeFunV3/chunkby.hpp
+1393628517 /home/arzar/Code/RangeFunV3/chunkby.hpp
 	<range/v3/range_facade.hpp>
 	<range/v3/view/adjacent_filter.hpp>
 	<range/v3/algorithm/adjacent_find.hpp>

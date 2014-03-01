@@ -1,4 +1,7 @@
+
 #include <range/v3/algorithm/for_each.hpp>
+#include <range/v3/view/transform.hpp>
+#include <range/v3/algorithm/transform.hpp>
 #include "range_ext.hpp"
 
 
@@ -24,9 +27,9 @@ day_range datesInYear(int year)
 }
 
 
-/**
-* Formats the name of a month centered on ColsPerWeek.
-*/
+//
+// Formats the name of a month centered on ColsPerWeek.
+//
 std::string monthTitle(int month)
 {
 	// Determine how many spaces before and after the month name we need to
@@ -50,31 +53,101 @@ struct formatDay
 };
 
 
+struct formatWeek
+{
+   using result_type = std::string;
+
+   template <typename Range>
+   std::string operator()(Range dates) const
+   {
+      std::stringstream ss;
+
+      greg::date d = *ranges::begin(dates);
+      int startDay = d.day_of_week() - 1;
+      startDay = startDay < 0 ? 6 : startDay;
+
+      ss << spaces(ColsPerDay * startDay);
+
+      int numDays = 0;
+      std::string s;
+      dates | ranges::for_each([&](const greg::date& d)
+      {
+        s += formatDay()(d) + " ";
+      });
+
+
+      // goal
+      //std::string s = dates | view::transform(formatDay()) | join(" ");
+
+      ss << s;
+
+      // Insert more filler at the end to fill up the remainder of the
+      // week, if it's a short week (e.g. at the end of the month).
+      if (numDays < 7 - startDay)
+      {
+         ss << spaces(ColsPerDay * (7 - startDay - numDays));
+      }
+
+      return ss.str();
+   }
+};
+
+std::stringstream g_ss;
+
+struct formatMonth
+{
+   using result_type = std::string;
+
+   template <typename Range>
+   std::string operator()(Range monthDay) const
+   {
+      g_ss.clear();
+      greg::date first_day_of_month = *monthDay.begin();
+
+      g_ss << monthTitle(first_day_of_month.month()) << std::endl;
+
+      auto weeks = ChunkByWeek(monthDay);
+      weeks | ranges::for_each([](auto w)
+      {
+        g_ss << formatWeek()(w) << "\n";
+      });
+
+      // goal
+      //ss << monthDay | ChunkByWeek | view::transform(formatWeek) |  join("\n");
+
+      g_ss << std::endl;
+      return g_ss.str();
+   }
+};
+
+
+
+
 int main()
 {
+
 	try
 	{
-        auto rd = datesInYear(2014);
-
-        std::cout << "chunck by month" << std::endl;
-	    auto months = ChunkByMonth(rd);
-        months| ranges::for_each([](const auto& aMonth)
+	    day_range year = datesInYear(2014);
+	    auto months = ChunkByMonth(year);
+/*
+        months | ranges::for_each([](auto aMonth)
 	    {
-	       for(day_iterator d : aMonth)
-	          std::cout << *d << "\n";
-            std::cout << "\n";
-	    });
+	       ChunkByWeek(aMonth) | ranges::for_each([](auto aWeek)
+	       {
+	          for(greg::date d : aWeek)
+	             std::cout << d << "\n";
+                 std::cout << "\n";
+	        });
 
+	    });*/
 
-	    std::cout << "chunck by week" << std::endl;
-	    auto weeks = ChunkByWeek(rd);
-        weeks | ranges::for_each([](const auto& aWeek)
+        months | ranges::for_each([](auto aMonth)
 	    {
-	       for(day_iterator d : aWeek)
-	          std::cout << *d << "\n";
-            std::cout << "\n";
-	    });
+	       std::cout << formatMonth()(aMonth);
+        });
 	}
+
 
 	catch (std::exception& e) {
 
@@ -83,6 +156,7 @@ int main()
 	}
 
 }
+
 
 
 
