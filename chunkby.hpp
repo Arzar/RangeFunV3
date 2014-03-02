@@ -1,7 +1,6 @@
 #pragma once
 
 #include <range/v3/range_facade.hpp>
-#include <range/v3/view/adjacent_filter.hpp>
 #include <range/v3/algorithm/adjacent_find.hpp>
 
 #include "day.hpp"
@@ -17,21 +16,37 @@ private:
 
     friend ranges::range_core_access;
     InputRange rng_;
+    InputRange subrng_;
     BinaryPred pred_;
 
-    auto current() const
+   	void move_to_next_subrange()
     {
-       return ranges::v3::range(rng_.begin(), ranges::adjacent_find(rng_, pred_));
+       auto begin_new_subrange = subrng_.end();
+       rng_ = InputRange(begin_new_subrange, rng_.end());
+
+       if (begin_new_subrange == rng_.end())
+         return;
+
+       auto end_new_subrange = ranges::adjacent_find(rng_, pred_);
+       if(end_new_subrange != rng_.end())
+         ++end_new_subrange;
+
+       subrng_ = InputRange(begin_new_subrange, end_new_subrange);
+    }
+
+    const InputRange& current() const
+    {
+       return subrng_;
+    }
+
+    InputRange& current()
+    {
+       return subrng_;
     }
 
     void next()
     {
-       auto it = rng_.begin();
-       auto e = rng_.end();
-       it = std::adjacent_find(it, e, pred_);
-       if(it != e)
-         ++it;
-       rng_ = InputRange(it, e);
+       	move_to_next_subrange();
     }
     bool done() const
     {
@@ -43,7 +58,10 @@ private:
     }
 public:
     chunkBy_view(InputRange rng, BinaryPred pred)
-        : rng_(rng), pred_(pred){}
+        : rng_(rng), subrng_(rng.begin(), rng.begin()), pred_(pred)
+    {
+       move_to_next_subrange();
+    }
 };
 
 template <typename InputRange, typename BinaryPred>
@@ -70,21 +88,21 @@ namespace view
             {}
             template<typename InputRange, typename This>
             static chunkBy_view<InputRange, BinaryPred>
-            pipe(InputRange && rng, This && this_)
+            pipe(InputRange rng, This && this_)
             {
-                return {std::forward<InputRange>(rng), std::forward<This>(this_).pred_};
+                return {rng, std::forward<This>(this_).pred_};
             }
         };
     public:
         ///
         template<typename InputRange1, typename BinaryPred>
         static chunkBy_view<InputRange1, BinaryPred>
-        invoke(chunkByer, InputRange1 && rng, BinaryPred pred)
+        invoke(chunkByer, InputRange1 rng, BinaryPred pred)
         {
             //CONCEPT_ASSERT(ranges::InputRange<InputRange1>());
             //CONCEPT_ASSERT(ranges::Callable<invokable_t<UnaryFunction>,
             //                                range_reference_t<InputRange1>>());
-            return {std::forward<InputRange1>(rng), std::move(pred)};
+            return {rng, std::move(pred)};
         }
 
         /// \overload
@@ -98,3 +116,4 @@ namespace view
     RANGES_CONSTEXPR chunkByer chunkBy {};
 
 }
+

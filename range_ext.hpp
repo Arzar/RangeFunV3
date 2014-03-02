@@ -25,19 +25,11 @@
  };
 
 
-template <typename InputRange>
-chunkBy_view<InputRange, PredByMonth> ChunkByMonth(InputRange ir)
+namespace view
 {
-   return ChunkByFunc(ir, PredByMonth());
+   RANGES_CONSTEXPR auto chunkByMonth = view::chunkBy(PredByMonth());
+   RANGES_CONSTEXPR auto chunkByWeek = view::chunkBy(PredByWeek());
 }
-
-template <typename InputRange>
-chunkBy_view<InputRange, PredByWeek> ChunkByWeek(InputRange ir)
-{
-   return ChunkByFunc((ir), PredByWeek());
-}
-
-
 
 template <class InputRng, class Value>
 Value join(InputRng rng, Value sep)

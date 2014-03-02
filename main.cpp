@@ -70,7 +70,7 @@ struct formatWeek
 
       int numDays = 0;
       std::string s;
-      dates | ranges::for_each([&](const greg::date& d)
+      dates | ranges::for_each([&](const greg::date& d)
       {
         s += formatDay()(d) + " ";
       });
@@ -92,31 +92,28 @@ struct formatWeek
    }
 };
 
-std::stringstream g_ss;
 
 struct formatMonth
 {
    using result_type = std::string;
 
-   template <typename Range>
-   std::string operator()(Range monthDay) const
+   std::string operator()(day_range monthDay) const
    {
-      g_ss.clear();
+      std::stringstream ss;
       greg::date first_day_of_month = *monthDay.begin();
 
-      g_ss << monthTitle(first_day_of_month.month()) << std::endl;
+      ss << monthTitle(first_day_of_month.month()) << std::endl;
 
-      auto weeks = ChunkByWeek(monthDay);
-      weeks | ranges::for_each([](auto w)
+      monthDay | view::chunkByWeek | ranges::for_each([&](day_range w)
       {
-        g_ss << formatWeek()(w) << "\n";
+        ss << formatWeek()(w) << "\n";
       });
 
       // goal
       //ss << monthDay | ChunkByWeek | view::transform(formatWeek) |  join("\n");
 
-      g_ss << std::endl;
-      return g_ss.str();
+      ss << std::endl;
+      return ss.str();
    }
 };
 
@@ -128,21 +125,7 @@ int main()
 
 	try
 	{
-	    day_range year = datesInYear(2014);
-	    auto months = ChunkByMonth(year);
-/*
-        months | ranges::for_each([](auto aMonth)
-	    {
-	       ChunkByWeek(aMonth) | ranges::for_each([](auto aWeek)
-	       {
-	          for(greg::date d : aWeek)
-	             std::cout << d << "\n";
-                 std::cout << "\n";
-	        });
-
-	    });*/
-
-        months | ranges::for_each([](auto aMonth)
+	    datesInYear(2014) | view::chunkByMonth |ranges::for_each([](auto aMonth)
 	    {
 	       std::cout << formatMonth()(aMonth);
         });
