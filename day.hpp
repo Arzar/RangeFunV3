@@ -4,6 +4,8 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 
+#include "chunkby.hpp"
+
 namespace greg = boost::gregorian;
 
 
@@ -44,14 +46,13 @@ private:
 	}
 	greg::date& dereference()
 	{
-		//return greg::date(this->m_date);
 		return m_date;
 	}
 
 	greg::date m_date;
 };
 
-#include <range/v3/iterator_range.hpp>
+
 
 struct day_range : public ranges::iterator_range<day_iterator>
 {
@@ -63,5 +64,34 @@ struct day_range : public ranges::iterator_range<day_iterator>
 		ranges::iterator_range<day_iterator>(begin, end)
 	{}
 };
+
+ struct PredByMonth
+ {
+    using first_argument_type = greg::date;
+    using second_argument_type = greg::date;
+    bool operator()(const greg::date& d1, const greg::date& d2) const
+    {
+      return d1.month() == d2.month();
+    }
+ };
+
+ struct PredByWeek
+ {
+    using first_argument_type = greg::date;
+    using second_argument_type = greg::date;
+    bool operator()(const greg::date& d1, const greg::date& d2) const
+    {
+      return d1.week_number() == d2.week_number();
+    }
+ };
+
+namespace ranges
+{
+    namespace view
+    {
+       RANGES_CONSTEXPR auto chunkByMonth = view::chunkBy(PredByMonth());
+       RANGES_CONSTEXPR auto chunkByWeek = view::chunkBy(PredByWeek());
+    }
+}
 
 

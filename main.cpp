@@ -1,9 +1,10 @@
 
-#include <range/v3/algorithm/for_each.hpp>
-#include <range/v3/view/transform.hpp>
-#include <range/v3/algorithm/transform.hpp>
-#include "range_ext.hpp"
+#include <range/v3/range.hpp>
+#include "join.hpp"
+#include "day.hpp"
 
+using namespace std::placeholders;
+using namespace ranges;
 
 const char* monthNames [] = { "January", "February", "March", "April", "May", "June",
 "July", "August", "September", "October", "November", "December" };
@@ -14,7 +15,7 @@ int ColsPerDay = 3;
 /// The number of columns per week in the formatted output.
 int ColsPerWeek = 7 * ColsPerDay;
 
-std::string spaces(size_t n)
+std::string spaces(int n)
 {
 	return std::string(n, ' ');
 }
@@ -61,6 +62,7 @@ struct formatWeek
    std::string operator()(Range dates) const
    {
       std::stringstream ss;
+      ranges::detail::decay_t<Range> r = dates;
 
       greg::date d = *ranges::begin(dates);
       int startDay = d.day_of_week() - 1;
@@ -69,16 +71,15 @@ struct formatWeek
       ss << spaces(ColsPerDay * startDay);
 
       int numDays = 0;
+
+      // goal
+      //ss << (r | ranges::view::transform(formatDay()) | ranges::view::join(" "));
+
       std::string s;
-      dates | ranges::for_each([&](const greg::date& d)
+      dates | for_each([&](const greg::date& d)
       {
         s += formatDay()(d) + " ";
       });
-
-
-      // goal
-      //std::string s = dates | view::transform(formatDay()) | join(" ");
-
       ss << s;
 
       // Insert more filler at the end to fill up the remainder of the
@@ -104,13 +105,7 @@ struct formatMonth
 
       ss << monthTitle(first_day_of_month.month()) << std::endl;
 
-      monthDay | view::chunkByWeek | ranges::for_each([&](day_range w)
-      {
-        ss << formatWeek()(w) << "\n";
-      });
-
-      // goal
-      //ss << monthDay | ChunkByWeek | view::transform(formatWeek) |  join("\n");
+      ss << (monthDay | view::chunkByWeek | view::transform(formatWeek()) |  join("\n"));
 
       ss << std::endl;
       return ss.str();
@@ -118,22 +113,18 @@ struct formatMonth
 };
 
 
-
-
 int main()
 {
-
 	try
 	{
-	    datesInYear(2014) | view::chunkByMonth |ranges::for_each([](auto aMonth)
-	    {
-	       std::cout << formatMonth()(aMonth);
-        });
+       std::cout << (datesInYear(2014) |
+                     view::chunkByMonth |
+                     view::transform(formatMonth()) |
+                     join('\n'));
 	}
 
-
-	catch (std::exception& e) {
-
+	catch (std::exception& e)
+	{
 		std::cout << "Error bad date, check your entry: \n"
 			<< "  Details: " << e.what() << std::endl;
 	}

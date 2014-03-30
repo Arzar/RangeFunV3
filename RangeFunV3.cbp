@@ -35,8 +35,8 @@
 		</Compiler>
 		<Unit filename="chunkby.hpp" />
 		<Unit filename="day.hpp" />
+		<Unit filename="join.hpp" />
 		<Unit filename="main.cpp" />
-		<Unit filename="range_ext.hpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />

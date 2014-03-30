@@ -1,18 +1,17 @@
 # depslib dependency file v1.0
-1393767437 source:/home/arzar/Code/RangeFunV3/main.cpp
-	<range/v3/algorithm/for_each.hpp>
-	<range/v3/view/transform.hpp>
-	<range/v3/algorithm/transform.hpp>
-	"range_ext.hpp"
+1396189575 source:/home/arzar/Code/RangeFunV3/main.cpp
+	<range/v3/range.hpp>
+	"join.hpp"
+	"day.hpp"
 
 1387232131 /home/arzar/Code/range-v3/include/range/v3/utility/iterator_traits.hpp
 	<range/v3/utility/iterator_concepts.hpp>
 
-1393617973 /home/arzar/Code/range-v3/include/range/v3/utility/iterator_concepts.hpp
+1394057651 /home/arzar/Code/range-v3/include/range/v3/utility/iterator_concepts.hpp
 	<iterator>
 	<range/v3/utility/concepts.hpp>
 
-1393617973 /home/arzar/Code/range-v3/include/range/v3/utility/concepts.hpp
+1394057651 /home/arzar/Code/range-v3/include/range/v3/utility/concepts.hpp
 	<utility>
 	<type_traits>
 	<range/v3/utility/swap.hpp>
@@ -23,7 +22,7 @@
 	<utility>
 	<range/v3/range_fwd.hpp>
 
-1393617973 /home/arzar/Code/range-v3/include/range/v3/range_fwd.hpp
+1394401890 /home/arzar/Code/range-v3/include/range/v3/range_fwd.hpp
 	<iosfwd>
 	<type_traits>
 	<utility>
@@ -37,7 +36,7 @@
 1388538322 /home/arzar/Code/range-v3/include/range/v3/utility/logical_ops.hpp
 	<type_traits>
 
-1393617973 /home/arzar/Code/range-v3/include/range/v3/view/transform.hpp
+1394401890 /home/arzar/Code/range-v3/include/range/v3/view/transform.hpp
 	<utility>
 	<iterator>
 	<type_traits>
@@ -69,7 +68,7 @@
 	<range/v3/begin_end.hpp>
 	<range/v3/range_concepts.hpp>
 
-1385937012 /home/arzar/Code/range-v3/include/range/v3/begin_end.hpp
+1394401890 /home/arzar/Code/range-v3/include/range/v3/begin_end.hpp
 	<iterator>
 	<range/v3/range_fwd.hpp>
 	<range/v3/utility/bindable.hpp>
@@ -100,7 +99,7 @@
 	<cstddef>
 	<range/v3/range_fwd.hpp>
 
-1393617973 /home/arzar/Code/range-v3/include/range/v3/range_concepts.hpp
+1394401890 /home/arzar/Code/range-v3/include/range/v3/range_concepts.hpp
 	<limits>
 	<utility>
 	<type_traits>
@@ -131,7 +130,7 @@
 	<range/v3/range_concepts.hpp>
 	<range/v3/range_facade.hpp>
 
-1393617973 /home/arzar/Code/range-v3/include/range/v3/range_facade.hpp
+1394401890 /home/arzar/Code/range-v3/include/range/v3/range_facade.hpp
 	<utility>
 	<range/v3/range_fwd.hpp>
 	<range/v3/utility/concepts.hpp>
@@ -178,22 +177,22 @@
 1389534465 /home/arzar/Code/range-v3/include/range/v3/utility/functional.hpp
 	<range/v3/range_fwd.hpp>
 
-1393767482 /home/arzar/Code/RangeFunV3/range_ext.hpp
+1396188791 /home/arzar/Code/RangeFunV3/range_ext.hpp
 	"chunkby.hpp"
 	"day.hpp"
+	<string>
 
-1393766976 /home/arzar/Code/RangeFunV3/chunkby.hpp
+1396189756 /home/arzar/Code/RangeFunV3/chunkby.hpp
 	<range/v3/range_facade.hpp>
-	<range/v3/algorithm/adjacent_find.hpp>
 	"day.hpp"
 
-1393197200 /home/arzar/Code/RangeFunV3/day.hpp
+1396189416 /home/arzar/Code/RangeFunV3/day.hpp
 	<iterator>
 	<boost/date_time/gregorian/gregorian.hpp>
 	<boost/iterator/iterator_facade.hpp>
-	<range/v3/iterator_range.hpp>
+	"chunkby.hpp"
 
-1393617973 /home/arzar/Code/range-v3/include/range/v3/iterator_range.hpp
+1394401890 /home/arzar/Code/range-v3/include/range/v3/iterator_range.hpp
 	<utility>
 	<iterator>
 	<range/v3/range_fwd.hpp>
@@ -210,4 +209,31 @@
 	<range/v3/utility/bindable.hpp>
 	<range/v3/utility/invokable.hpp>
 	<range/v3/utility/iterator_concepts.hpp>
+
+1394401890 /home/arzar/Code/range-v3/include/range/v3/view/filter.hpp
+	<utility>
+	<iterator>
+	<type_traits>
+	<range/v3/range_fwd.hpp>
+	<range/v3/range_traits.hpp>
+	<range/v3/begin_end.hpp>
+	<range/v3/range_facade.hpp>
+	<range/v3/utility/compressed_pair.hpp>
+	<range/v3/utility/bindable.hpp>
+	<range/v3/utility/invokable.hpp>
+
+1393617973 /home/arzar/Code/range-v3/include/range/v3/algorithm/max_element.hpp
+	<utility>
+	<range/v3/begin_end.hpp>
+	<range/v3/next_prev.hpp>
+	<range/v3/range_concepts.hpp>
+	<range/v3/utility/bindable.hpp>
+	<range/v3/utility/invokable.hpp>
+	<range/v3/utility/functional.hpp>
+
+1396182997 /home/arzar/Code/RangeFunV3/c_str.hpp
+	<range/v3/range_facade.hpp>
+
+1396189349 /home/arzar/Code/RangeFunV3/join.hpp
+	<range/v3/range_facade.hpp>
 
