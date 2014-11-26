@@ -2,6 +2,7 @@
 
 #include <range/v3/range_facade.hpp>
 #include "day.hpp"
+#include "type_name.h"
 
 
 template <class ForwardIterator, class BinaryPredicate>
@@ -12,7 +13,7 @@ ForwardIterator adjacent_equal(ForwardIterator first, ForwardIterator last, Bina
         ForwardIterator i = first;
         while (++i != last)
         {
-            if (pred(*first, *i) == false)
+            if (!pred(*first, *i))
                 return i;
             first = i;
         }
@@ -20,136 +21,82 @@ ForwardIterator adjacent_equal(ForwardIterator first, ForwardIterator last, Bina
     return last;
 }
 
+
+
 namespace ranges
 {
     inline namespace v3
     {
-        namespace detail
-        {
-            template<typename InputIterator>
-            struct chunkby_sentinel;
-
-            template<typename InputRange, typename BinaryPred>
-            struct chunkby_cursor
-            {
-                using InputIterator = ranges::range_iterator_t<InputRange>;
-
-                InputRange subrng_;
-                InputIterator end_;
-                BinaryPred pred_;
-
-                chunkby_cursor(InputRange r, BinaryPred pred)
-                  : subrng_(r.begin(), r.begin()), end_(r.end()), pred_(pred)
-                {
-                    move_to_next_subrange();
-                }
-
-                const InputRange& current() const
-                {
-                    return subrng_;
-                }
-
-                void next()
-                {
-                    move_to_next_subrange();
-                }
-
-            private:
-                void move_to_next_subrange()
-                {
-                   auto begin_new_subrange = subrng_.end();
-                   auto end_new_subrange = adjacent_equal(begin_new_subrange, end_, pred_);
-                   subrng_ = InputRange(begin_new_subrange, end_new_subrange);
-                }
-            };
-
-            template<typename InputRange>
-            struct chunkby_sentinel
-            {
-                using InputIterator = ranges::range_iterator_t<InputRange>;
-                InputIterator end_;
-
-                chunkby_sentinel(InputRange r)
-                  : end_(r.end())
-                {}
-
-                template<typename BinaryPredicate>
-                bool equal(chunkby_cursor<InputRange, BinaryPredicate> const &that) const
-                {
-                    return end_ == that.subrng_.begin();
-                }
-            };
-
-        }
-
         template<typename InputRange, typename BinaryPred>
-        struct chunkBy_view
-          : range_facade<chunkBy_view<InputRange, BinaryPred>>
+        class chunkBy_view
+          : public range_facade<chunkBy_view<InputRange, BinaryPred>>
         {
-        private:
-            friend range_core_access;
-            using InputIterator = ranges::range_iterator_t<InputRange>;
 
-            InputRange r_;
-            BinaryPred pred_;
+          using BaseInputRange = std::decay_t<InputRange>;
+          using InputIterator = decltype(std::declval<BaseInputRange>().begin());
+          using InputSentinel = decltype(std::declval<BaseInputRange>().end());
+          using SubRange      = ranges::v3::range<InputIterator, InputSentinel>;
 
-            detail::chunkby_cursor<InputRange, BinaryPred> begin_cursor() const
-            {
-                return {r_, pred_};
-            }
-            detail::chunkby_sentinel<InputRange> end_cursor() const
-            {
-                return {r_};
-            }
+          friend range_access;
 
+
+          SubRange subrng_;
+          InputSentinel end_;
+          BinaryPred pred_;
+
+          const SubRange & current() const { return subrng_; }
+          SubRange & current() { return subrng_; }
+          bool done() const { return subrng_.begin() == end_; }
+          void next() { move_to_next_subrange(); }
+          void move_to_next_subrange()
+          {
+             auto begin_new_subrange = subrng_.end();
+             auto end_new_subrange = adjacent_equal(begin_new_subrange, end_, pred_);
+             subrng_ = SubRange(begin_new_subrange, end_new_subrange);
+          }
         public:
+          chunkBy_view() = default;
+          chunkBy_view(InputRange&& r, BinaryPred pred)
+              : subrng_(std::forward<InputRange>(r).begin(), std::forward<InputRange>(r).begin()),
+                end_(std::forward<InputRange>(r).end()),
+                pred_(pred)
+            {
+            /*
+               std::cout << "BaseInputRange  " << type_name<BaseInputRange>() << '\n';
+               std::cout << "InputIterator   " << type_name<InputIterator>() << '\n';
+               std::cout << "InputSentinel   " << type_name<InputSentinel>() << '\n';
+               std::cout << "SubRange        " << type_name<SubRange>() << '\n';
 
-            chunkBy_view(InputRange r, BinaryPred pred)
-              : r_(r), pred_(pred)
-            {}
+               std::cout << "BinaryPred      " << type_name<BinaryPred>() << '\n';
+            */
+
+               move_to_next_subrange();
+            }
         };
 
         namespace view
         {
-            struct chunkByer : ranges::bindable<chunkByer>
+            struct chunkBy_fn
             {
-            private:
-                template<typename BinaryPred>
-                struct chunkByer1 : ranges::pipeable<chunkByer1<BinaryPred>>
+                template<typename Rng, typename Fun>
+                chunkBy_view<Rng, Fun> operator()(Rng && rng, Fun fun) const
                 {
-                private:
-                    BinaryPred pred_;
-                public:
-                    chunkByer1(BinaryPred pred)
-                      : pred_(std::move(pred))
-                    {}
-                    template<typename InputRange, typename This>
-                    static chunkBy_view<InputRange, BinaryPred>
-                    pipe(InputRange rng, This && this_)
-                    {
-                        return {rng, std::forward<This>(this_).pred_};
-                    }
-                };
-            public:
-                template<typename InputRange1, typename BinaryPred>
-                static chunkBy_view<InputRange1, BinaryPred>
-                invoke(chunkByer, InputRange1 rng, BinaryPred pred)
-                {
-                    CONCEPT_ASSERT(ranges::Range<InputRange1>());
-                    return {rng, std::move(pred)};
+                    CONCEPT_ASSERT(InputIterable<Rng>());
+                    //CONCEPT_ASSERT(Invokable<Fun, range_value_t<Rng>>());
+                    return {std::forward<Rng>(rng), std::move(fun)};
                 }
 
-                /// \overload
-                template<typename BinaryPred>
-                static chunkByer1<BinaryPred> invoke(chunkByer, BinaryPred pred)
+                template<typename Fun>
+                auto operator()(Fun fun) const ->
+                    decltype(make_pipeable(std::bind(*this, std::placeholders::_1, protect(std::move(fun)))))
                 {
-                    return {std::move(pred)};
+                    return make_pipeable(std::bind(*this, std::placeholders::_1, protect(std::move(fun))));
                 }
             };
 
-            RANGES_CONSTEXPR chunkByer chunkBy {};
+            RANGES_CONSTEXPR chunkBy_fn chunkBy {};
         }
-    } // end v3
+    }
+}
 
-} // end ranges
 

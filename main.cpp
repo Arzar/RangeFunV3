@@ -1,7 +1,9 @@
 
-#include <range/v3/range.hpp>
+#include <range/v3/all.hpp>
 #include "join.hpp"
 #include "day.hpp"
+#include <range/v3/range_for.hpp>
+
 
 using namespace std::placeholders;
 using namespace ranges;
@@ -19,6 +21,7 @@ std::string spaces(int n)
 {
 	return std::string(n, ' ');
 }
+
 
 day_range datesInYear(int year)
 {
@@ -42,10 +45,11 @@ std::string monthTitle(int month)
 	return spaces(before) + name + spaces(after);
 }
 
+
 struct formatDay
 {
 	using result_type = std::string;
-	std::string operator()(const greg::date& d) const
+	std::string operator()(greg::date d) const
 	{
 		std::stringstream ss;
 		ss << std::setw(2) << d.day().as_number();
@@ -62,7 +66,6 @@ struct formatWeek
    std::string operator()(Range dates) const
    {
       std::stringstream ss;
-      ranges::detail::decay_t<Range> r = dates;
 
       greg::date d = *ranges::begin(dates);
       int startDay = d.day_of_week() - 1;
@@ -73,14 +76,9 @@ struct formatWeek
       int numDays = 0;
 
       // goal
-      //ss << (r | ranges::view::transform(formatDay()) | ranges::view::join(" "));
-
-      std::string s;
-      dates | for_each([&](const greg::date& d)
-      {
-        s += formatDay()(d) + " ";
-      });
-      ss << s;
+      //ss << (dates | ranges::view::transform(formatDay()) | ranges::view::join(" "));
+      std::string w = ranges::join(dates | ranges::v3::view::transform(formatDay()) | ranges::v3::view::to_vector , " ");
+      ss << w;
 
       // Insert more filler at the end to fill up the remainder of the
       // week, if it's a short week (e.g. at the end of the month).
@@ -98,16 +96,19 @@ struct formatMonth
 {
    using result_type = std::string;
 
-   std::string operator()(day_range monthDay) const
+   template <typename Range>
+   std::string operator()(Range r) const
    {
+      day_range monthDay{r.begin(), r.end()};
+
       std::stringstream ss;
       greg::date first_day_of_month = *monthDay.begin();
 
       ss << monthTitle(first_day_of_month.month()) << std::endl;
 
-      ss << (monthDay | view::chunkByWeek | view::transform(formatWeek()) |  join("\n"));
+      std::string m = join(monthDay | ranges::v3::view::chunkByWeek | view::transform(formatWeek()), "\n");
 
-      ss << std::endl;
+      ss << m << std::endl;
       return ss.str();
    }
 };
@@ -117,10 +118,14 @@ int main()
 {
 	try
 	{
-       std::cout << (datesInYear(2014) |
-                     view::chunkByMonth |
-                     view::transform(formatMonth()) |
-                     join('\n'));
+	   std::string y = ranges::join(datesInYear(2014) |
+                                    view::chunkByMonth |
+                                    view::transform(formatMonth()) |
+                                    view::to_vector,
+                                    "\n");
+
+        std::cout << y << std::endl;
+
 	}
 
 	catch (std::exception& e)

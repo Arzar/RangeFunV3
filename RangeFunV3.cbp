@@ -20,9 +20,10 @@
 				<Option output="bin/Release/RangeFun" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
-				<Option compiler="gcc" />
+				<Option compiler="clang" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-ftemplate-backtrace-limit=0" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -37,6 +38,7 @@
 		<Unit filename="day.hpp" />
 		<Unit filename="join.hpp" />
 		<Unit filename="main.cpp" />
+		<Unit filename="type_name.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />
