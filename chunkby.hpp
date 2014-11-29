@@ -94,7 +94,7 @@ namespace ranges
                 }
             };
 
-            RANGES_CONSTEXPR chunkBy_fn chunkBy {};
+            constexpr chunkBy_fn chunkBy {};
         }
     }
 }

@@ -13,13 +13,13 @@ class day_iterator
 	: public boost::iterator_facade <
 	day_iterator
 	, greg::date
-	, boost::random_access_traversal_tag
+	, boost::forward_traversal_tag
 	, const greg::date&
 	>
 {
 public:
 
-	using iterator_category = std::random_access_iterator_tag;
+	using iterator_category = std::forward_iterator_tag;
 
 	day_iterator()
 		: m_date()
@@ -33,8 +33,8 @@ private:
 	friend class boost::iterator_core_access;
 
 	void increment() { m_date = m_date + greg::date_duration(1); }
-	void decrement() { m_date = m_date - greg::date_duration(1); }
-	void advance(int n) {m_date = m_date + greg::date_duration(n); }
+	//void decrement() { m_date = m_date - greg::date_duration(1); }
+	//void advance(int n) {m_date = m_date + greg::date_duration(n); }
 	int distance_to(const day_iterator& other) const { return (other.m_date - m_date).days();}
 
 	bool equal(const day_iterator& other) const
@@ -85,24 +85,14 @@ struct day_range : public ranges::range<day_iterator>
     }
  };
 
- struct PredByNumber
- {
-    using first_argument_type = int;
-    using second_argument_type = int;
-    bool operator()(int d1, int d2) const
-    {
-      return d1 == d2;
-    }
-  };
-
 namespace ranges
 {
     inline namespace v3
     {
        namespace view
        {
-          auto chunkByMonth = ranges::v3::view::chunkBy(PredByMonth());
-          auto chunkByWeek = ranges::v3::view::chunkBy(PredByWeek());
+          auto chunkByMonth = view::chunkBy(PredByMonth());
+          auto chunkByWeek = view::chunkBy(PredByWeek());
        }
     }
 }
