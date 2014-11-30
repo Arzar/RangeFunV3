@@ -1,5 +1,9 @@
 *.layout
 *.cbp
 *.depend
+*.o
+*.hi
+*.*~
+calendar
 bin/
 obj/
