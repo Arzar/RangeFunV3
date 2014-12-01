@@ -100,7 +100,7 @@ struct formatMonth
 
       ss << monthTitle(first_day_of_month.month()) << std::endl;
 
-      std::string m = monthDay | view::chunkByWeek | view::transform(formatWeek()) | action::join("\n");
+      std::string m = monthDay | view::groupByWeek | view::transform(formatWeek()) | action::join("\n");
 
       ss << m << std::endl;
       return ss.str();
@@ -113,7 +113,7 @@ int main()
 	try
 	{
         std::cout << (  datesInYear(2014)
-                      | view::chunkByMonth
+                      | view::groupByMonth
                       | view::transform(formatMonth())
                       | to_vector
                       | action::join("\n")

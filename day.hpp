@@ -4,7 +4,7 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 
-#include "chunkby.hpp"
+#include "groupby.hpp"
 
 namespace greg = boost::gregorian;
 
@@ -33,8 +33,6 @@ private:
 	friend class boost::iterator_core_access;
 
 	void increment() { m_date = m_date + greg::date_duration(1); }
-	//void decrement() { m_date = m_date - greg::date_duration(1); }
-	//void advance(int n) {m_date = m_date + greg::date_duration(n); }
 	int distance_to(const day_iterator& other) const { return (other.m_date - m_date).days();}
 
 	bool equal(const day_iterator& other) const
@@ -91,8 +89,8 @@ namespace ranges
     {
        namespace view
        {
-          auto chunkByMonth = view::chunkBy(PredByMonth());
-          auto chunkByWeek = view::chunkBy(PredByWeek());
+          auto groupByMonth = view::groupBy(PredByMonth());
+          auto groupByWeek = view::groupBy(PredByWeek());
        }
     }
 }

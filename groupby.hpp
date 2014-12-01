@@ -28,8 +28,8 @@ namespace ranges
     inline namespace v3
     {
         template<typename InputRange, typename BinaryPred>
-        class chunkBy_view
-          : public range_facade<chunkBy_view<InputRange, BinaryPred>>
+        class groupBy_view
+          : public range_facade<groupBy_view<InputRange, BinaryPred>>
         {
 
           using BaseInputRange = std::decay_t<InputRange>;
@@ -55,8 +55,8 @@ namespace ranges
              subrng_ = SubRange(begin_new_subrange, end_new_subrange);
           }
         public:
-          chunkBy_view() = default;
-          chunkBy_view(InputRange&& r, BinaryPred pred)
+          groupBy_view() = default;
+          groupBy_view(InputRange&& r, BinaryPred pred)
               : subrng_(std::forward<InputRange>(r).begin(), std::forward<InputRange>(r).begin()),
                 end_(std::forward<InputRange>(r).end()),
                 pred_(pred)
@@ -76,10 +76,10 @@ namespace ranges
 
         namespace view
         {
-            struct chunkBy_fn
+            struct groupBy_fn
             {
                 template<typename Rng, typename Fun>
-                chunkBy_view<Rng, Fun> operator()(Rng && rng, Fun fun) const
+                groupBy_view<Rng, Fun> operator()(Rng && rng, Fun fun) const
                 {
                     CONCEPT_ASSERT(InputIterable<Rng>());
                     //CONCEPT_ASSERT(Invokable<Fun, range_value_t<Rng>>());
@@ -94,7 +94,7 @@ namespace ranges
                 }
             };
 
-            constexpr chunkBy_fn chunkBy {};
+            constexpr groupBy_fn groupBy {};
         }
     }
 }
