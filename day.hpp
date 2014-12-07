@@ -4,64 +4,39 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 
-#include "groupby.hpp"
 
 namespace greg = boost::gregorian;
 
-
 class day_iterator
-	: public boost::iterator_facade <
-	day_iterator
-	, greg::date
-	, boost::forward_traversal_tag
-	, const greg::date&
-	>
 {
+    greg::date m_date;
+
 public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type        = greg::date;
+    using difference_type   = ptrdiff_t;
+    using pointer           = greg::date*;
+    using reference         = const greg::date&;
 
-	using iterator_category = std::forward_iterator_tag;
+    day_iterator() : m_date() {}
+    day_iterator(const day_iterator& it) : m_date(it.m_date) {}
+    day_iterator(const greg::date& d) : m_date(d) {}
 
-	day_iterator()
-		: m_date()
-	{}
+    const greg::date& operator*() const {return m_date;}
+    pointer operator->() {return &m_date;}
 
-	day_iterator(greg::date d)
-		: m_date(d)
-	{}
+    day_iterator& operator++() {m_date = m_date + greg::date_duration(1); return *this;}
+    day_iterator operator++(int)
+        {day_iterator tmp(*this); ++(*this); return tmp;}
 
-private:
-	friend class boost::iterator_core_access;
-
-	void increment() { m_date = m_date + greg::date_duration(1); }
-	int distance_to(const day_iterator& other) const { return (other.m_date - m_date).days();}
-
-	bool equal(const day_iterator& other) const
-	{
-		return this->m_date == other.m_date;
-	}
-
-	const greg::date& dereference() const
-	{
-		return m_date;
-	}
-	greg::date& dereference()
-	{
-		return m_date;
-	}
-
-	greg::date m_date;
+    friend bool operator==(const day_iterator& x, const day_iterator& y)
+        {return x.m_date == y.m_date;}
+    friend bool operator!=(const day_iterator& x, const day_iterator& y)
+        {return !(x == y);}
 };
 
-struct day_range : public ranges::range<day_iterator>
-{
-	day_range(const greg::date& begin, const greg::date& end) :
-		ranges::range<day_iterator>(day_iterator(begin), day_iterator(end))
-	{}
+using day_range = ranges::range<day_iterator>;
 
-	day_range(day_iterator begin, day_iterator end) :
-		ranges::range<day_iterator>(begin, end)
-	{}
-};
 
  struct PredByMonth
  {
@@ -89,8 +64,8 @@ namespace ranges
     {
        namespace view
        {
-          auto groupByMonth = view::groupBy(PredByMonth());
-          auto groupByWeek = view::groupBy(PredByWeek());
+          auto groupByMonth = group_by(PredByMonth());
+          auto groupByWeek = group_by(PredByWeek());
        }
     }
 }

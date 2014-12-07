@@ -72,7 +72,7 @@ struct formatWeek
 
       int numDays = 0;
 
-      ss << (dates | view::transform(formatDay()) | action::join(" "));
+      ss << ranges::join(dates | view::transform(formatDay()), " ");
 
       // Insert more filler at the end to fill up the remainder of the
       // week, if it's a short week (e.g. at the end of the month).
@@ -93,32 +93,25 @@ struct formatMonth
    template <typename Range>
    std::string operator()(Range r) const
    {
-      day_range monthDay{r.begin(), r.end()};
-
       std::stringstream ss;
-      greg::date first_day_of_month = *monthDay.begin();
+      greg::date first_day_of_month = *r.begin();
 
       ss << monthTitle(first_day_of_month.month()) << std::endl;
 
-      std::string m = monthDay | view::groupByWeek | view::transform(formatWeek()) | action::join("\n");
+      std::string m = ranges::join(r | view::groupByWeek | view::transform(formatWeek()), "\n");
 
       ss << m << std::endl;
       return ss.str();
+
    }
 };
 
 
 int main()
 {
-	try
+   	try
 	{
-        std::cout << (  datesInYear(2014)
-                      | view::groupByMonth
-                      | view::transform(formatMonth())
-                      | to_vector
-                      | action::join("\n")
-                     )
-                 << std::endl;
+	    std::cout << join(datesInYear(2014) | view::groupByMonth | view::transform(formatMonth()), "\n") << std::endl;
 	}
 
 	catch (std::exception& e)

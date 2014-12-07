@@ -40,40 +40,5 @@ namespace ranges
        {
           return detail::join(rng.begin(), rng.end(), std::forward<Value>(sep));
        }
-
-       namespace action
-        {
-            template <typename Val>
-            struct join_fn_impl
-            {
-               Val sep_;
-               join_fn_impl(Val&& s):sep_(std::move(s)){}
-
-               template<typename Rng>
-               range_value_t<Rng> operator()(const Rng& rng) const
-               {
-                  return ranges::join(rng, std::move(sep_));
-               }
-            };
-
-            struct join_fn
-            {
-            public:
-                template<typename Val>
-                join_fn_impl<Val> operator()(Val&& sep) const
-                {
-                    return join_fn_impl<Val>{std::forward<Val>(sep)};
-                }
-            };
-
-            constexpr join_fn join{};
-
-            template <typename Range, typename Val>
-            auto operator|(const Range& r, join_fn_impl<Val> joiner)
-            {
-              return joiner(r);
-            }
-        }
-
     } // inline namespace v3
 }
