@@ -1,9 +1,41 @@
+#include <boost/date_time/gregorian/gregorian.hpp>
 
-#include <range/v3/all.hpp>
-#include "join.hpp"
-#include "day.hpp"
+#include <range/v3/range.hpp>
+#include <range/v3/numeric/accumulate.hpp>
+#include <range/v3/view/group_by.hpp>
+#include <range/v3/view/intersperse.hpp>
+#include <range/v3/view/split.hpp>
+#include <range/v3/view/transform.hpp>
+
+
+namespace greg = boost::gregorian;
+
+namespace boost { namespace gregorian {
+    date &operator++(date &d) { return d = d + date_duration(1); }
+    date operator++(date &d, int) { return ++d - date_duration(1); }
+}}
+
+namespace ranges {
+    template<> struct difference_type<greg::date> {
+        using type = greg::date::duration_type::duration_rep::int_type;
+    };
+}
+
+CONCEPT_ASSERT(ranges::Incrementable<greg::date>());
 
 using namespace ranges;
+
+auto by_month() {
+    return view::group_by([](greg::date a, greg::date b) {
+        return a.month() == b.month();
+    });
+}
+
+auto by_week() {
+    return view::group_by([](greg::date a, greg::date b) {
+        return b.day_of_week() != greg::Sunday || a == b;
+    });
+}
 
 const char* monthNames [] = { "January", "February", "March", "April", "May", "June",
 "July", "August", "September", "October", "November", "December" };
@@ -17,14 +49,6 @@ int ColsPerWeek = 7 * ColsPerDay;
 std::string spaces(int n)
 {
 	return std::string(n, ' ');
-}
-
-
-day_range datesInYear(int year)
-{
-	greg::date year_first_day = greg::date(year, 1, 1);
-	greg::date next_year_first_day = greg::date(year + 1, 1, 1);
-	return day_range(year_first_day, next_year_first_day);
 }
 
 
@@ -45,7 +69,6 @@ std::string monthTitle(int month)
 
 struct formatDay
 {
-	using result_type = std::string;
 	std::string operator()(greg::date d) const
 	{
 		std::stringstream ss;
@@ -55,10 +78,8 @@ struct formatDay
 };
 
 
-struct formatWeek
+struct FormatWeek
 {
-   using result_type = std::string;
-
    template <typename Range>
    std::string operator()(Range dates) const
    {
@@ -72,7 +93,8 @@ struct formatWeek
 
       int numDays = 0;
 
-      ss << ranges::join(dates | view::transform(formatDay()), " ");
+      auto weeks = dates | view::transform(formatDay()) | view::intersperse(" ");
+      ss << ranges::accumulate(weeks, std::string());
 
       // Insert more filler at the end to fill up the remainder of the
       // week, if it's a short week (e.g. at the end of the month).
@@ -86,10 +108,8 @@ struct formatWeek
 };
 
 
-struct formatMonth
+struct FormatMonth
 {
-   using result_type = std::string;
-
    template <typename Range>
    std::string operator()(Range r) const
    {
@@ -98,20 +118,40 @@ struct formatMonth
 
       ss << monthTitle(first_day_of_month.month()) << std::endl;
 
-      std::string m = ranges::join(r | view::groupByWeek | view::transform(formatWeek()), "\n");
+      auto months = r | by_week() | view::transform(FormatWeek()) | view::intersperse("\n");
 
-      ss << m << std::endl;
+      ss << accumulate(months, std::string()) << std::endl;
       return ss.str();
 
    }
 };
 
+auto datesInYear(int year)
+{
+	greg::date year_first_day = greg::date(year, 1, 1);
+	greg::date next_year_first_day = greg::date(year + 1, 1, 1);
+	return view::iota(year_first_day, next_year_first_day);
+}
+
+template <typename Range>
+std::string formatCalendar(Range days)
+{
+   auto monthsFormatted = days |
+                          by_month() |
+                          view::transform(FormatMonth()) |
+                          view::intersperse("\n");
+
+   return accumulate(monthsFormatted, std::string());
+}
+
+#include "perf.hpp"
 
 int main()
 {
    	try
 	{
-	    std::cout << join(datesInYear(2014) | view::groupByMonth | view::transform(formatMonth()), "\n") << std::endl;
+	    auto year2014 = datesInYear(2014);
+	    std::cout << formatCalendar(year2014) << std::endl;
 	}
 
 	catch (std::exception& e)
@@ -120,6 +160,7 @@ int main()
 			<< "  Details: " << e.what() << std::endl;
 	}
 
+	//perf();
 }
 
 
