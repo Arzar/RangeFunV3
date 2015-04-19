@@ -1,15 +1,34 @@
+// Following code use some part of Eric Niebler's range-v3 library calendar example :
+// https://github.com/ericniebler/range-v3
+
+//
+// Range v3 library
+//
+//  Copyright Eric Niebler 2013-2014
+//
+//  Use, modification and distribution is subject to the
+//  Boost Software License, Version 1.0. (See accompanying
+//  file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt)
+//
+
 #include <boost/date_time/gregorian/gregorian.hpp>
 
 #include <range/v3/range.hpp>
+#include <range/v3/front.hpp>
 #include <range/v3/numeric/accumulate.hpp>
 #include <range/v3/view/group_by.hpp>
 #include <range/v3/view/intersperse.hpp>
 #include <range/v3/view/split.hpp>
 #include <range/v3/view/transform.hpp>
 
+using namespace ranges;
 
 namespace greg = boost::gregorian;
 
+// Nee trick, taken from range-v3 calendar example :
+// No need to create a proper iterator on greg::date, just get greg::date to satisfy
+// WeaklyIncrementable concept and view:iota generate a range for us.
 namespace boost { namespace gregorian {
     date &operator++(date &d) { return d = d + date_duration(1); }
     date operator++(date &d, int) { return ++d - date_duration(1); }
@@ -21,9 +40,13 @@ namespace ranges {
     };
 }
 
-CONCEPT_ASSERT(ranges::Incrementable<greg::date>());
+CONCEPT_ASSERT_MSG(WeaklyIncrementable<greg::date>(),
+                        "Must have pre- and post-increment operators and it must have a difference_type");
 
-using namespace ranges;
+using IotaView = decltype(view::iota(std::declval<greg::date>(), std::declval<greg::date>()));
+CONCEPT_ASSERT(InputIterable<IotaView>());
+CONCEPT_ASSERT(Iterable<IotaView>());
+CONCEPT_ASSERT(Range<IotaView>());
 
 auto by_month() {
     return view::group_by([](greg::date a, greg::date b) {
@@ -33,7 +56,12 @@ auto by_month() {
 
 auto by_week() {
     return view::group_by([](greg::date a, greg::date b) {
-        return b.day_of_week() != greg::Sunday || a == b;
+
+        // BUG, the following test work in range-v3 calendar example
+        // but somehow mess up the formatting here
+        //return b.day_of_week() != greg::Sunday || a == b;
+
+        return b.week_number() == a.week_number();
     });
 }
 
@@ -85,7 +113,7 @@ struct FormatWeek
    {
       std::stringstream ss;
 
-      greg::date d = *ranges::begin(dates);
+      greg::date d = ranges::front(dates);
       int startDay = d.day_of_week() - 1;
       startDay = startDay < 0 ? 6 : startDay;
 
@@ -128,9 +156,9 @@ struct FormatMonth
 
 auto datesInYear(int year)
 {
-	greg::date year_first_day = greg::date(year, 1, 1);
-	greg::date next_year_first_day = greg::date(year + 1, 1, 1);
-	return view::iota(year_first_day, next_year_first_day);
+	auto new_year_day = greg::date(year, 1, 1);
+	auto last_year_day = greg::date(year, 12, 31);
+	return view::iota(new_year_day, last_year_day);
 }
 
 template <typename Range>
@@ -145,7 +173,6 @@ std::string formatCalendar(Range days)
 }
 
 #include "perf.hpp"
-
 int main()
 {
    	try

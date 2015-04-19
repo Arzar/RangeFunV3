@@ -1,4 +1,11 @@
 /*
+Folowwing code come from the article "Component programming with ranges" 
+By H. S. Teoh
+http://wiki.dlang.org/Component_programming_with_ranges
+https://github.com/quickfur/dcal
+*/
+
+/*
 * D calendar
 *
 * An example of how using component-style programming with ranges simplifies a
