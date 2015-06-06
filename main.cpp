@@ -11,16 +11,25 @@
 //  file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 //
+#include <sstream>
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 
+#include <range/v3/core.hpp>
+#include <range/v3/size.hpp>
 #include <range/v3/range.hpp>
 #include <range/v3/front.hpp>
+#include <range/v3/getlines.hpp>
 #include <range/v3/numeric/accumulate.hpp>
+#include <range/v3/to_container.hpp>
 #include <range/v3/view/group_by.hpp>
 #include <range/v3/view/intersperse.hpp>
-#include <range/v3/view/split.hpp>
+#include <range/v3/view/chunk.hpp>
 #include <range/v3/view/transform.hpp>
+#include <range/v3/view/single.hpp>
+#include <range/v3/view/concat.hpp>
+#include <range/v3/view/repeat_n.hpp>
+#include <range/v3/view/iota.hpp>
 
 using namespace ranges;
 
@@ -43,11 +52,6 @@ namespace ranges {
 CONCEPT_ASSERT_MSG(WeaklyIncrementable<greg::date>(),
                         "Must have pre- and post-increment operators and it must have a difference_type");
 
-using IotaView = decltype(view::iota(std::declval<greg::date>(), std::declval<greg::date>()));
-CONCEPT_ASSERT(InputIterable<IotaView>());
-CONCEPT_ASSERT(Iterable<IotaView>());
-CONCEPT_ASSERT(Range<IotaView>());
-
 auto by_month() {
     return view::group_by([](greg::date a, greg::date b) {
         return a.month() == b.month();
@@ -56,11 +60,6 @@ auto by_month() {
 
 auto by_week() {
     return view::group_by([](greg::date a, greg::date b) {
-
-        // BUG, the following test work in range-v3 calendar example
-        // but somehow mess up the formatting here
-        //return b.day_of_week() != greg::Sunday || a == b;
-
         return b.week_number() == a.week_number();
     });
 }
@@ -74,11 +73,12 @@ int ColsPerDay = 3;
 /// The number of columns per week in the formatted output.
 int ColsPerWeek = 7 * ColsPerDay;
 
+std::string MonthSep = "   ";
+
 std::string spaces(int n)
 {
 	return std::string(n, ' ');
 }
-
 
 //
 // Formats the name of a month centered on ColsPerWeek.
@@ -114,18 +114,21 @@ struct FormatWeek
       std::stringstream ss;
 
       greg::date d = ranges::front(dates);
+
+      // cope with american barbaric convention on starting week on sunday
       int startDay = d.day_of_week() - 1;
       startDay = startDay < 0 ? 6 : startDay;
 
       ss << spaces(ColsPerDay * startDay);
 
-      int numDays = 0;
+      auto weeks = dates | view::transform(formatDay())
+                         | view::intersperse(" ");
 
-      auto weeks = dates | view::transform(formatDay()) | view::intersperse(" ");
       ss << ranges::accumulate(weeks, std::string());
 
       // Insert more filler at the end to fill up the remainder of the
       // week, if it's a short week (e.g. at the end of the month).
+      int numDays = ranges::distance(dates);
       if (numDays < 7 - startDay)
       {
          ss << spaces(ColsPerDay * (7 - startDay - numDays));
@@ -139,46 +142,53 @@ struct FormatWeek
 struct FormatMonth
 {
    template <typename Range>
-   std::string operator()(Range r) const
+   auto operator()(Range month) const
    {
-      std::stringstream ss;
-      greg::date first_day_of_month = *r.begin();
+      // Required for last line padding, really inefficient though
+      int week_count = distance(month | by_week());
 
-      ss << monthTitle(first_day_of_month.month()) << std::endl;
-
-      auto months = r | by_week() | view::transform(FormatWeek()) | view::intersperse("\n");
-
-      ss << accumulate(months, std::string()) << std::endl;
-      return ss.str();
-
+       return view::concat(
+            view::single(monthTitle(front(month).month())),
+            month | by_week() | view::transform(FormatWeek()),
+            view::repeat_n(std::string(ColsPerWeek-1,' '), 6-week_count));
    }
 };
 
 auto datesInYear(int year)
 {
-	auto new_year_day = greg::date(year, 1, 1);
-	auto last_year_day = greg::date(year, 12, 31);
-	return view::iota(new_year_day, last_year_day);
+	return view::iota(greg::date(year, 1, 1), greg::date(year+1, 1, 1));
 }
 
 template <typename Range>
-std::string formatCalendar(Range days)
+auto formatMonths(Range days)
 {
-   auto monthsFormatted = days |
-                          by_month() |
-                          view::transform(FormatMonth()) |
-                          view::intersperse("\n");
-
-   return accumulate(monthsFormatted, std::string());
+   return days |
+          by_month() |
+          view::transform(FormatMonth());
 }
 
-#include "perf.hpp"
 int main()
 {
    	try
 	{
-	    auto year2014 = datesInYear(2014);
-	    std::cout << formatCalendar(year2014) << std::endl;
+	    auto year = datesInYear(2015);
+	    const int monthsByLine = 5;
+
+	    auto months = formatMonths(year) | view::chunk(monthsByLine);
+	    RANGES_FOR(auto monthsLine, months)
+	    {
+	       auto monthsLineVec = to_<std::vector<std::vector<std::string>>>(monthsLine);
+
+	       for(int j = 0; j < 7; j++)
+	       {
+	          for(int i = 0; i < monthsLineVec.size(); i++)
+	          {
+	             std::cout << monthsLineVec[i][j] << MonthSep;
+	          }
+	          std::cout << std::endl;
+	       }
+	       std::cout << std::endl;
+	    }
 	}
 
 	catch (std::exception& e)
@@ -186,8 +196,6 @@ int main()
 		std::cout << "Error bad date, check your entry: \n"
 			<< "  Details: " << e.what() << std::endl;
 	}
-
-	//perf();
 }
 
 
